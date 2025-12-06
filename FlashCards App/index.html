@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FlashCards — Ingliz so'z yodlash</title>
+<style>
+  :root{
+    --bg:#3e86c6; --card:hsl(0, 13%, 94%); --muted:#f3f5f8; --accent:#4e73df;
+    --good:#040605; --danger:#ef4444; --shadow: 0 10px 30px rgba(123, 128, 128, 0);
+    font-family: Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:#141415;padding:18px;min-height:100vh}
+  .wrap{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
+  header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+  h1{font-size:20px;margin:0}
+  .sub{color:var(--muted);font-size:13px}
+
+  /* Left main */
+  .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .btn{padding:10px 12px;border-radius:10px;border:none;background:var(--accent);color:white;cursor:pointer}
+  .btn.ghost{background:white;color:var(--accent);border:1px solid #e6eef8}
+  .btn.danger{background:var(--danger)}
+  .btn.small{padding:8px 10px;font-size:14px}
+
+  /* Card viewer */
+  .viewer{display:flex;flex-direction:column;align-items:center;gap:14px}
+  .flashWrap{width:100%;max-width:640px;perspective:1200px}
+  .flash{
+    width:100%;height:320px;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfdff);
+    display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;
+    box-shadow:0 12px 36px rgba(247, 247, 250, 0.08);position:relative;cursor:pointer;transition:transform .6s;
+    transform-style:preserve-3d;
+  }
+  .flash.flipped{transform:rotateY(180deg)}
+  .side{position:absolute;inset:0;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center}
+  .front{background:linear-gradient(180deg,#fff,#fbfdff)}
+  .back{transform:rotateY(180deg);background:linear-gradient(180deg,#fff,#fff8f1)}
+
+  .metaRow{display:flex;gap:10px;align-items:center;width:100%;justify-content:space-between}
+  .nav{display:flex;gap:8px;align-items:center}
+  .pager{display:flex;gap:6px;align-items:center;color:var(--muted)}
+
+  /* Right panel */
+  .sidebar{display:flex;flex-direction:column;gap:12px}
+  .list{max-height:540px;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-right:6px}
+  .item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;background:#fbfdff;border:1px solid #eef2ff}
+  .item .title{font-weight:700}
+  .tag{padding:6px 8px;border-radius:8px;background:#eef2ff;color:var(--accent);font-size:13px}
+
+  /* form */
+  .formRow{display:flex;gap:8px;align-items:center;margin-top:8px}
+  input[type="text"]{flex:1;padding:10px;border-radius:8px;border:1px solid #eef2ff}
+  .tiny{font-size:13px;color:var(--muted)}
+
+  /* footer small */
+  .small{font-size:13px;color:var(--muted)}
+
+  /* responsive */
+  @media (max-width:980px){
+    .wrap{grid-template-columns:1fr; padding-bottom:80px}
+    .flash{height:260px;font-size:28px}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>FlashCards — Ingliz so'z yodlash</h1>
+        <div class="sub">Oddiy va samarali — so'zni ko'r, tarjimasini esla</div>
+      </div>
+      
+    </header>
+
+    <!-- MAIN -->
+    <main class="card">
+      <div class="controls">
+        <button class="btn" id="prevBtn">◀ Oldingi</button>
+        <button class="btn" id="nextBtn">Keyingi ▶</button>
+        <button class="btn ghost" id="flipBtn">Flip</button>
+        <button class="btn small" id="clearBtn">Barchasini o'chirish</button>
+      </div>
+
+      <div class="viewer">
+        <div class="flashWrap" title="Kartani bosing yoki Flip tugmasini bosing">
+          <div id="flash" class="flash">
+            <div class="side front" id="frontSide">Bo'sh</div>
+            <div class="side back" id="backSide">Tarjima</div>
+          </div>
+        </div>
+
+        <div class="metaRow" style="max-width:640px;width:100%">
+          <div class="nav">
+          
+          </div>
+          <div>
+            <button class="btn small" id="markKnown">Bilaman ✔</button>
+            <button class="btn small" id="markUnknown">Bilmayman ✖</button>
+          </div>
+        </div>
+
+        <div style="max-width:640px;width:100%;margin-top:10px;text-align:center">
+          
+      </div>
+    </main>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="card">
+        <strong>Yangi karta qo'shish</strong>
+        <div class="formRow" style="margin-top:8px">
+          <input id="wordInput" type="text" placeholder="Inglizcha so'z (word)" />
+          <input id="transInput" type="text" placeholder="Tarjima (uz)" />
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn" id="addBtn">Qo'shish</button>
+          <button class="btn ghost" id="updateBtn" style="display:none">Yangilash</button>
+        </div>
+       
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <strong>Kartalar ro'yxati</strong>
+          <div class="tag" id="totalTag">0</div>
+        </div>
+        <div class="list" id="list"></div>
+      </div>
+
+      <div class="card">
+        <strong>Import / Export</strong>
+        <div style="margin-top:8px">
+          <input id="importFile" type="file" accept="application/json" />
+          <div style="margin-top:8px" class="small">JSON faylni tanlab import qiling (export fayl formatiga mos bo'lishi kerak).</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+<script>
+  // --- State ---
+  const STORAGE = 'flashcards_v1';
+  let cards = []; // {id, word, trans, status:'unknown'|'known'}
+  let idx = 0;
+  let studyMode = false;
+
+  // --- Elements ---
+  const flash = document.getElementById('flash');
+  const frontSide = document.getElementById('frontSide');
+  const backSide = document.getElementById('backSide');
+  const counter = document.getElementById('counter');
+  const knownCount = document.getElementById('knownCount');
+  const unknownCount = document.getElementById('unknownCount');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const flipBtn = document.getElementById('flipBtn');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const addBtn = document.getElementById('addBtn');
+  const updateBtn = document.getElementById('updateBtn');
+  const wordInput = document.getElementById('wordInput');
+  const transInput = document.getElementById('transInput');
+  const listEl = document.getElementById('list');
+  const totalTag = document.getElementById('totalTag');
+  const markKnown = document.getElementById('markKnown');
+  const markUnknown = document.getElementById('markUnknown');
+  const clearBtn = document.getElementById('clearBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const importFile = document.getElementById('importFile');
+  const studyModeBtn = document.getElementById('studyModeBtn');
+
+  // --- Helpers ---
+  function uid(){ return Math.random().toString(36).slice(2,9); }
+  function save(){
+    localStorage.setItem(STORAGE, JSON.stringify(cards));
+  }
+  function load(){
+    try { return JSON.parse(localStorage.getItem(STORAGE) || '[]'); }
+    catch(e){ return []; }
+  }
+  function renderList(){
+    listEl.innerHTML = '';
+    cards.forEach((c,i)=>{
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `
+        <div style="flex:1">
+          <div class="title">${escape(c.word)}</div>
+          <div class="small" style="color:var(--muted)">${escape(c.trans)}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button data-i="${i}" class="btn small" title="Edit">✏️</button>
+          <button data-del="${i}" class="btn small ghost" title="Delete">🗑️</button>
+        </div>
+      `;
+      listEl.appendChild(div);
+    });
+    totalTag.textContent = cards.length;
+    // bind edit/delete
+    listEl.querySelectorAll('button[title="Edit"]').forEach(b=>{
+      b.addEventListener('click',()=> {
+        const i = Number(b.dataset.i);
+        startEdit(i);
+      });
+    });
+    listEl.querySelectorAll('button[title="Delete"]').forEach(b=>{
+      b.addEventListener('click',()=> {
+        const i = Number(b.dataset.del);
+        if (!confirm('Karta o\'chirilsinmi?')) return;
+        cards.splice(i,1); save(); if (idx >= cards.length) idx = Math.max(0, cards.length-1); render();
+      });
+    });
+  }
+  function escape(s=''){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
+
+  // --- Render main ---
+  function render(){
+    if (cards.length === 0){
+      frontSide.textContent = 'Kartalar yo‘q';
+      backSide.textContent = 'Yuqoridagi form orqali qo‘shing';
+      counter.textContent = '0 / 0';
+      knownCount.textContent = 'Known: 0';
+      unknownCount.textContent = 'Unknown: 0';
+      renderList();
+      return;
+    }
+    if (idx < 0) idx = 0;
+    if (idx >= cards.length) idx = cards.length - 1;
+    const c = cards[idx];
+    frontSide.textContent = c.word;
+    backSide.textContent = c.trans;
+    counter.textContent = (idx+1) + ' / ' + cards.length;
+    const known = cards.filter(x=>x.status==='known').length;
+    const unknown = cards.filter(x=>x.status==='unknown').length;
+    knownCount.textContent = 'Known: ' + known;
+    unknownCount.textContent = 'Unknown: ' + unknown;
+    totalTag.textContent = cards.length;
+    renderList();
+    // visual known/unknown indicator
+    flash.style.border = c.status === 'known' ? `4px solid var(--good)` : `1px solid #eef2ff`;
+  }
+
+  // --- Actions ---
+  prevBtn.addEventListener('click', ()=> {
+    if (cards.length===0) return;
+    idx = (idx - 1 + cards.length) % cards.length;
+    if (studyMode && cards[idx].status === 'known') { // skip known if study mode on
+      // find next unknown backwards
+      let found = false; for (let i=0;i<cards.length;i++){ const j=(idx - i + cards.length)%cards.length; if (cards[j].status!=='known'){ idx=j; found=true; break; } }
+      if (!found) { alert('Barchasini bilasiz!'); return; }
+    }
+    flash.classList.remove('flipped'); render();
+  });
+
+  nextBtn.addEventListener('click', ()=> {
+    if (cards.length===0) return;
+    idx = (idx + 1) % cards.length;
+    if (studyMode && cards[idx].status === 'known') {
+      let found = false; for (let i=0;i<cards.length;i++){ const j=(idx + i)%cards.length; if (cards[j].status!=='known'){ idx=j; found=true; break; } }
+      if (!found) { alert('Barchasini bilasiz!'); return; }
+    }
+    flash.classList.remove('flipped'); render();
+  });
+
+  flipBtn.addEventListener('click', ()=> {
+    flash.classList.toggle('flipped');
+  });
+  flash.addEventListener('click', ()=> flash.classList.toggle('flipped'));
+
+  addBtn.addEventListener('click', ()=> {
+    const w = wordInput.value.trim();
+    const t = transInput.value.trim();
+    if (!w || !t) return alert('So‘z va tarjimani kiriting.');
+    const obj = { id: uid(), word: w, trans: t, status: 'unknown' };
+    cards.push(obj); save(); wordInput.value=''; transInput.value=''; idx = cards.length-1; render();
+  });
+
+  function startEdit(i){
+    const c = cards[i];
+    wordInput.value = c.word; transInput.value = c.trans;
+    addBtn.style.display = 'none'; updateBtn.style.display = 'inline-block';
+    updateBtn.onclick = ()=> {
+      const nw = wordInput.value.trim(), nt = transInput.value.trim();
+      if (!nw || !nt) return alert('Iltimos ikkalasini ham yozing.');
+      cards[i].word = nw; cards[i].trans = nt; save();
+      wordInput.value=''; transInput.value=''; addBtn.style.display='inline-block'; updateBtn.style.display='none';
+      render();
+    };
+  }
+
+  markKnown.addEventListener('click', ()=> {
+    if (!cards.length) return;
+    cards[idx].status = 'known'; save(); render();
+  });
+  markUnknown.addEventListener('click', ()=> {
+    if (!cards.length) return;
+    cards[idx].status = 'unknown'; save(); render();
+  });
+
+  shuffleBtn.addEventListener('click', ()=> {
+    for (let i=cards.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [cards[i],cards[j]]=[cards[j],cards[i]]; }
+    idx = 0; save(); render();
+  });
+
+  clearBtn.addEventListener('click', ()=> {
+    if (!confirm('Barchasini o\'chirilsinmi?')) return;
+    cards=[]; save(); idx=0; render();
+  });
+
+  exportBtn.addEventListener('click', ()=> {
+    const data = JSON.stringify(cards, null, 2);
+    const blob = new Blob([data], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download = 'flashcards_export.json'; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  importFile.addEventListener('change', (e)=> {
+    const f = e.target.files[0]; if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev)=> {
+      try {
+        const arr = JSON.parse(ev.target.result);
+        if (!Array.isArray(arr)) throw new Error('Not array');
+        // normalize and append
+        arr.forEach(x => {
+          if (x.word && x.trans) cards.push({ id: uid(), word: x.word, trans: x.trans, status: x.status||'unknown' });
+        });
+        save(); render(); alert('Import yakunlandi.');
+      } catch(err){ alert('Noto\'g\'ri fayl.'); }
+    };
+    reader.readAsText(f);
+    importFile.value = '';
+  });
+
+  studyModeBtn.addEventListener('click', ()=> {
+    studyMode = !studyMode;
+    studyModeBtn.textContent = 'Study mode: ' + (studyMode ? 'ON' : 'OFF');
+    studyModeBtn.classList.toggle('ghost', !studyMode);
+    // if turning on, move to first unknown
+    if (studyMode){
+      const j = cards.findIndex(c => c.status !== 'known');
+      if (j !== -1) idx = j; else alert('Hozircha barcha kartalar known.');
+    }
+    render();
+  });
+
+  // keyboard navigation
+  document.addEventListener('keydown', (e)=> {
+    if (e.key === 'ArrowRight') nextBtn.click();
+    if (e.key === 'ArrowLeft') prevBtn.click();
+    if (e.key === ' ') { e.preventDefault(); flipBtn.click(); }
+  });
+
+  // init
+  cards = load();
+  // sample data if empty
+  if (cards.length === 0){
+    const samples = [
+      { id: uid(), word: 'apple', trans: 'olma', status: 'unknown' },
+      { id: uid(), word: 'book', trans: 'kitob', status: 'unknown' },
+      { id: uid(), word: 'school', trans: 'maktab', status: 'unknown' },
+    ];
+    cards = samples;
+    save();
+  }
+  render();
+</script>
+</body>
+</html>
